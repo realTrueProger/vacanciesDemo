@@ -1,13 +1,19 @@
 <template>
     <div>
-    <h1>Vue hh project</h1>
-    <template v-if="vacanciesFetched">
-      <p>Данные загружены</p>
-      <vacancies-cities :cities="cities" />
-    </template>
+        <h1>Vue hh project</h1>
 
-    <p v-else>Загружаем свежайшие вакансии...</p>
-  </div>
+        <template v-if="vacanciesFetched">
+            <p>Данные загружены</p>
+            <VacanciesCities :cities="cities" />
+        </template>
+
+        <p v-else>Загружаем свежайшие вакансии...</p>
+        
+        <template v-if="error">
+            <p>Что то пошло не так, но мы уже работаем над этим. <br /> Вы можете ознакомится с актуальными вакансиями на сайте HeadHunter</p>
+            <a href="https://hh.ru/employer/656481">Вакансии Биглион</a>
+        </template>
+    </div>
 </template>
 
 <script>
@@ -19,37 +25,34 @@ export default {
     return {
       vacancies: [],
       vacanciesFetched: false,
-      cities: []
+      cities: [],
+      error: false
     };
   },
   components: {
-    "vacancies-cities": VacanciesCities
+    VacanciesCities
   },
   created() {
     axios
       .get("https://api.myjson.com/bins/1077os")
       .then(response => {
         this.vacancies = response.data;
+        this.getCities();
+        this.vacanciesFetched = true;
       })
       .catch(function(error) {
         console.log(error);
+        this.error = true;
       });
-  },
-  watch: {
-    vacancies() {
-      this.getCities();
-      this.vacanciesFetched = true;
-    }
   },
   methods: {
     getCities() {
       let set = new Set();
-      this.vacancies.forEach(vacanсy => {
-        let city = vacanсy.addr.match(/[а-я-]+/i);
-        set.add(city[0]);
+      this.vacancies.forEach(({ addr }) => {
+        let city = addr.split(",")[0];
+        set.add(city);
       });
-      this.cities = Array.from(set);
-      this.cities.sort((a, b) => (a > b ? 1 : -1));
+      this.cities = [...set].sort((a, b) => (a > b ? 1 : -1));
     }
   }
 };
